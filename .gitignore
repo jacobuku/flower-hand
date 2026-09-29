@@ -1,0 +1,26 @@
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.ruff-cache/
+.pytest_cache/
+.mypy_cache/
+
+.venv/
+venv/
+env/
+.env
+.env.*
+
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
+.DS_Store
+
+# Flower Hand: local-only files, never publish
+keys/
+*.pem
+*.key
+events.jsonl
+*.fab

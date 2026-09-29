@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flower-hand"
+version = "0.1.0"
+description = "Two-key check for AI hospital robots: an Endeavor Planner proposes a skill, a rule-based Safety node verifies it, a pharmacist approves before the arm moves. Fail-closed at every step."
+license = { file = "LICENSE" }
+requires-python = ">=3.11,<4.0"
+dependencies = ["flwr>=1.39.0,<2.0", "openai>=2.16.0,<3.0.0", "requests>=2.31.0,<3.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["agent"]
+
+[tool.flwr.app]
+publisher = "jacobuku"
+display-name = "Flower Hand"
+color = "emerald"
+fab-format-version = 1
+flwr-version-target = "1.39.0"
+fab-include = ["agent/**/*.py", "LICENSE"]
+
+[tool.flwr.app.components]
+agentapp = "agent.agent_app:app"

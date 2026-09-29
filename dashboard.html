@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flower Hand Dashboard</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121923; --line:#223044; --text:#e6edf3; --muted:#8b9bb0;
+    --idle:#2a3748; --info:#3b82f6; --ok:#22c55e; --block:#ef4444; --pending:#f59e0b;
+    --timeout:#64748b; --escalate:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,sans-serif}
+  body{display:flex;flex-direction:column;padding:24px 32px;gap:22px}
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  h1{margin:0;font-size:34px;letter-spacing:.5px}
+  h1 span{color:var(--ok)}
+  .tag{color:var(--muted);font-size:17px;margin-top:4px}
+  .meta{text-align:right;color:var(--muted);font-size:15px;line-height:1.6;font-variant-numeric:tabular-nums}
+  .meta b{color:var(--text);font-weight:600}
+  .chain{display:flex;align-items:stretch;gap:0;flex-wrap:nowrap}
+  .node{flex:1 1 0;min-width:0;background:var(--panel);border:3px solid var(--idle);border-radius:18px;
+    padding:18px 16px;display:flex;flex-direction:column;gap:8px;transition:border-color .3s, box-shadow .3s, opacity .3s}
+  .node .icon{font-size:34px;line-height:1}
+  .node .title{font-size:22px;font-weight:700}
+  .node .sub{font-size:13px;color:var(--muted)}
+  .node .state{margin-top:auto;font-size:14px;font-weight:700;letter-spacing:1px;color:var(--muted)}
+  .node .msg{font-size:15px;min-height:40px;color:var(--text);word-break:break-word}
+  .node.info{border-color:var(--info);box-shadow:0 0 24px rgba(59,130,246,.35);animation:pulse 1s infinite}
+  .node.ok,.node.done{border-color:var(--ok);box-shadow:0 0 26px rgba(34,197,94,.4)}
+  .node.block,.node.error{border-color:var(--block);box-shadow:0 0 30px rgba(239,68,68,.55)}
+  .node.pending,.node.escalate{border-color:var(--pending);box-shadow:0 0 24px rgba(245,158,11,.45);animation:pulse 1s infinite}
+  .node.timeout{border-color:var(--timeout);border-style:dashed;opacity:.55}
+  .node.info .state{color:var(--info)} .node.ok .state,.node.done .state{color:var(--ok)}
+  .node.block .state,.node.error .state{color:var(--block)} .node.pending .state,.node.escalate .state{color:var(--pending)}
+  .node.timeout .state{color:var(--timeout)}
+  @keyframes pulse{50%{box-shadow:0 0 6px rgba(255,255,255,.05)}}
+  .link{flex:0 0 46px;position:relative;align-self:center;height:6px;background:var(--line);border-radius:3px;margin:0 6px}
+  .link.on{background:var(--c)}
+  .link.on::after{content:"";position:absolute;top:-5px;left:0;width:16px;height:16px;border-radius:50%;
+    background:#fff;box-shadow:0 0 12px var(--c);animation:flow .9s linear infinite}
+  .link.cut{background:repeating-linear-gradient(90deg,var(--timeout) 0 6px,transparent 6px 12px)}
+  @keyframes flow{from{left:-4px}to{left:calc(100% - 12px)}}
+  .banner{border-radius:16px;padding:18px 24px;font-size:30px;font-weight:800;text-align:center;
+    background:var(--panel);border:2px solid var(--line);color:var(--muted);min-height:78px;transition:all .3s}
+  .banner.ok{background:rgba(34,197,94,.14);border-color:var(--ok);color:var(--ok)}
+  .banner.block{background:rgba(239,68,68,.16);border-color:var(--block);color:#ff8a8a}
+  .banner.escalate,.banner.pending{background:rgba(245,158,11,.14);border-color:var(--pending);color:#fbbf24}
+  .log{flex:1;min-height:0;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+  .log h3{margin:0 0 8px;font-size:14px;color:var(--muted);letter-spacing:1px}
+  .row{display:grid;grid-template-columns:90px 130px 100px 1fr;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);
+    font-size:15px;font-variant-numeric:tabular-nums}
+  .row:last-child{border-bottom:0}
+  .row .t{color:var(--muted)} .row .n{font-weight:700}
+  .s-ok,.s-done{color:var(--ok)} .s-block,.s-error{color:var(--block)} .s-pending,.s-escalate{color:var(--pending)}
+  .s-info{color:var(--info)} .s-timeout{color:var(--timeout)}
+  footer{color:var(--muted);font-size:12px;display:flex;justify-content:space-between}
+  .conn{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--timeout);margin-right:6px}
+  .conn.live{background:var(--ok)}
+  @media (max-width:900px){
+    body{padding:16px}
+    .chain{flex-direction:column}
+    .link{flex:0 0 26px;width:6px;height:26px;margin:6px auto}
+    .link.on::after{left:-5px;animation:flowv .9s linear infinite}
+    @keyframes flowv{from{top:-4px}to{top:calc(100% - 12px)}}
+    .row{grid-template-columns:70px 100px 80px 1fr;font-size:13px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Flower <span>Hand</span></h1>
+    <div class="tag">An independent double check for AI-driven hospital robots · Flower SuperGrid</div>
+  </div>
+  <div class="meta">
+    Order <b id="orderId">—</b><br>
+    SuperGrid run <b id="runId">—</b>
+  </div>
+</header>
+
+<section class="chain" id="chain"></section>
+
+<div class="banner" id="banner">Waiting for a doctor's order…</div>
+
+<section class="log">
+  <h3>MESSAGE LOG</h3>
+  <div id="log"></div>
+</section>
+
+<footer>
+  <div><span class="conn" id="conn"></span><span id="connText">connecting…</span></div>
+  <div>keys: R reset · F fullscreen · demo mode: 1 normal · 2 look-alike · 3 fail-closed · 4 unknown order</div>
+</footer>
+
+<script>
+/* ===== Config ===== */
+const EVENTS_URL = "events.jsonl";   // written by the Coordinator, one JSON object per line
+const POLL_MS = 500;                 // how often to read the file
+const STEP_MS = 700;                 // min gap between animated steps, so judges can follow
+const NODES = [
+  {id:"order",      icon:"📝", title:"Doctor's Order", sub:"Order entered"},
+  {id:"planner",    icon:"🧠", title:"Planner",        sub:"Endeavor + rule fallback · SuperGrid"},
+  {id:"safety",     icon:"🛡️", title:"Safety",         sub:"Independent node · rule check"},
+  {id:"pharmacist", icon:"🔑", title:"Pharmacist",     sub:"Human key"},
+  {id:"pharmacy",   icon:"🦾", title:"Pharmacy Node",  sub:"Robot arm · data stays local"},
+];
+const STATE_LABEL = {idle:"IDLE",info:"WORKING",ok:"APPROVED",done:"DONE",block:"BLOCKED",error:"ERROR",
+  pending:"WAITING",escalate:"ESCALATED",timeout:"NO RESPONSE"};
+const COLOR = {info:"var(--info)",ok:"var(--ok)",done:"var(--ok)",block:"var(--block)",error:"var(--block)",
+  pending:"var(--pending)",escalate:"var(--pending)",timeout:"var(--timeout)"};
+
+/* ===== Build chain ===== */
+const chain = document.getElementById("chain");
+NODES.forEach((n,i)=>{
+  if(i>0){const l=document.createElement("div");l.className="link";l.id="link-"+i;chain.appendChild(l);}
+  const d=document.createElement("div");d.className="node";d.id="node-"+n.id;
+  d.innerHTML=`<div class="icon">${n.icon}</div><div class="title">${n.title}</div><div class="sub">${n.sub}</div>
+    <div class="msg"></div><div class="state">IDLE</div>`;
+  chain.appendChild(d);
+});
+
+const $ = id => document.getElementById(id);
+function esc(s){return String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ===== Rendering ===== */
+function clearAll(){
+  NODES.forEach((n,i)=>{
+    const d=$("node-"+n.id); d.className="node"; d.querySelector(".msg").textContent=""; d.querySelector(".state").textContent="IDLE";
+    if(i>0){const l=$("link-"+i); l.className="link"; l.style.removeProperty("--c");}
+  });
+  setBanner("","Waiting for a doctor's order…");
+  $("log").innerHTML=""; $("orderId").textContent="—";
+  currentOrder=null;
+}
+function setBanner(status,text){const b=$("banner"); b.className="banner "+(status||""); b.textContent=text;}
+function stopFlowsBefore(idx){ // freeze earlier links once the message has passed
+  for(let i=1;i<idx;i++){const l=$("link-"+i); if(l.classList.contains("on")) l.classList.add("done");}
+}
+function addLog(e){
+  const t=(e.ts?new Date(e.ts):new Date()).toLocaleTimeString([], {hour12:false});
+  const row=document.createElement("div"); row.className="row";
+  row.innerHTML=`<span class="t">${esc(t)}</span><span class="n">${esc(e.node)}</span>
+    <span class="s-${esc(e.status)}">${esc((e.status||"").toUpperCase())}</span><span>${esc(e.text)}</span>`;
+  $("log").prepend(row);
+}
+
+let currentOrder=null;
+function apply(e){
+  if(!e||typeof e!=="object") return;
+  if(e.status==="reset"){clearAll(); return;}
+  if(e.node==="order" && e.order_id && e.order_id!==currentOrder){ // new order → fresh chain
+    const keepLog=$("log").innerHTML; clearAll(); $("log").innerHTML=keepLog;
+  }
+  if(e.order_id){currentOrder=e.order_id; $("orderId").textContent=e.order_id;}
+  if(e.run_id){$("runId").textContent=e.run_id;}
+  addLog(e);
+
+  if(e.node==="coordinator"){
+    setBanner(e.status==="done"?"ok":e.status, e.text||"");
+    if(e.status==="block"||e.status==="escalate"){ // show the chain as stopped downstream
+      NODES.forEach((n,i)=>{ if(i>0){const l=$("link-"+i); if(!l.classList.contains("on")) l.classList.add("cut");}});
+    }
+    return;
+  }
+  const idx=NODES.findIndex(n=>n.id===e.node); if(idx<0) return;
+  const d=$("node-"+e.node);
+  d.className="node "+(e.status||"info");
+  d.querySelector(".msg").textContent=e.text||"";
+  d.querySelector(".state").textContent=STATE_LABEL[e.status]||String(e.status||"").toUpperCase();
+  if(idx>0){
+    const l=$("link-"+idx);
+    if(e.status==="timeout"){l.className="link cut";}
+    else{l.className="link on"; l.style.setProperty("--c",COLOR[e.status]||"var(--info)");}
+  }
+  // automatic banners for the key moments
+  if(e.node==="safety"&&e.status==="block") setBanner("block","BLOCKED by independent check");
+  else if(e.node==="safety"&&e.status==="timeout") setBanner("block","Safety offline — no second key");
+  else if(e.node==="pharmacist"&&e.status==="pending") setBanner("pending","Waiting for the pharmacist's key");
+  else if(e.node==="pharmacy"&&e.status==="done") setBanner("ok","Dispensed ✓  Two keys turned");
+  else if(e.status==="escalate") setBanner("escalate",e.text||"Escalated to pharmacist");
+}
+
+/* ===== Event queue (so fast bursts still animate step by step) ===== */
+const queue=[]; let lastStep=0;
+setInterval(()=>{
+  if(!queue.length) return;
+  const now=Date.now(); if(now-lastStep<STEP_MS) return;
+  lastStep=now; apply(queue.shift());
+},80);
+
+/* ===== Live mode: poll events.jsonl ===== */
+const params=new URLSearchParams(location.search);
+const DEMO=params.has("demo");
+let processed=0;
+async function poll(){
+  try{
+    const r=await fetch(EVENTS_URL+"?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const lines=(await r.text()).split("\n").filter(s=>s.trim());
+    if(lines.length<processed){processed=0; queue.length=0; clearAll();} // file was cleared → reset
+    for(let i=processed;i<lines.length;i++){ try{queue.push(JSON.parse(lines[i]));}catch(_){} }
+    processed=lines.length;
+    $("conn").className="conn live"; $("connText").textContent="live · "+EVENTS_URL;
+  }catch(err){
+    $("conn").className="conn"; $("connText").textContent="waiting for "+EVENTS_URL+" ("+err.message+")";
+  }
+}
+if(!DEMO){ poll(); setInterval(poll,POLL_MS); }
+else { $("conn").className="conn live"; $("connText").textContent="DEMO MODE (simulated events)"; }
+
+/* ===== Demo mode: simulated scenes (testing + backup video) ===== */
+let demoN=0;
+function ev(node,status,text){return {ts:new Date().toISOString(),order_id:String(demoN).padStart(3,"0"),
+  run_id:"demo-run",node,status,text};}
+const SCENES={
+  "1":()=>[ev("order","info","Bed 12 needs Drug A"),ev("planner","ok","Plan: place_drug_A (Endeavor)"),
+    ev("safety","ok","Order Drug A = Plan Drug A ✓"),ev("pharmacist","pending","Waiting for pharmacist key (y/n)"),
+    ev("pharmacist","ok","Approved by pharmacist"),ev("pharmacy","info","Executing on Pharmacy Node"),
+    ev("pharmacy","done","Done. Log kept on hospital node")],
+  "2":()=>[ev("order","info","Bed 12 needs Drug A"),ev("planner","ok","Plan: place_drug_AX (Endeavor)"),
+    ev("safety","block","Order Drug A ≠ Plan Drug A-X — BLOCKED"),
+    ev("coordinator","block","Stopped. Pharmacist not asked, arm not moved")],
+  "3":()=>[ev("order","info","Bed 12 needs Drug A"),ev("planner","ok","Plan: place_drug_A"),
+    ev("safety","timeout","No response in 5s"),ev("coordinator","block","Refused — fail-closed. No second key, no motion")],
+  "4":()=>[ev("order","info","Bed 12 needs Drug B"),ev("planner","escalate","No verified skill for Drug B"),
+    ev("coordinator","escalate","Escalated to pharmacist")],
+};
+function runScene(k){ demoN++; queue.length=0; SCENES[k]().forEach(e=>queue.push(e)); }
+
+/* ===== Keys ===== */
+document.addEventListener("keydown",e=>{
+  const k=e.key.toLowerCase();
+  if(k==="r"){queue.length=0; clearAll();}
+  else if(k==="f"){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+  else if(DEMO && SCENES[k]) runScene(k);
+});
+</script>
+</body>
+</html>
