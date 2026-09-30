@@ -17,7 +17,14 @@ arm moves, two independent keys must turn: a rule-based **Safety** check on a se
 machine, and a human **pharmacist** on the Pharmacy machine. Every step is
 **fail-closed**: no answer, an unknown answer, or an error means the arm does not move.
 
-Authors: LJ and Jolin.
+Authors: LJ and KJ (Jolin Keming Jiao).
+
+## Who built what
+
+Built side by side in one day by LJ and KJ. Most early code was committed from LJ's account while pairing.
+
+- **LJ** — Flower federation, Coordinator, Planner & Safety agents
+- **KJ** — Pharmacy node, human "second key" server, gripper bridge, teleop calibration, dashboard, demo & pitch
 
 ## The three nodes
 
