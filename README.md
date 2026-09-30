@@ -6,6 +6,10 @@ framework: []
 
 # Flower Hand
 
+**Demo:** a human teaches the arm by hand — then it picks up the medication (and the Flower socks 🧦).
+
+https://github.com/user-attachments/assets/fb4749fc-c1d7-4dc2-8a88-4e688ba2e261
+
 An independent two-key check for AI-driven hospital robots.
 
 A cloud Planner proposes which robot skill to run for a medication order. Before the
